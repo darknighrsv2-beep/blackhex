@@ -40,6 +40,7 @@ button,input{
   border:2px solid red;
   color:red;
   margin:6px;
+  font-size:16px;
 }
 button:hover{
   background:red;
@@ -50,6 +51,8 @@ pre{
   text-align:left;
   display:inline-block;
   margin-top:15px;
+  white-space:pre-wrap;
+  word-break:break-all;
 }
 .footer{
   position:fixed;
@@ -58,6 +61,10 @@ pre{
   text-align:center;
   font-size:12px;
   opacity:0.7;
+}
+#copyBtn{
+  display:none;
+  margin-top:10px;
 }
 </style>
 </head>
@@ -80,11 +87,12 @@ pre{
     <button onclick="modo='grupo'">GRUPO</button>
   </div>
   <br>
-  <input id="url" placeholder="Pega el link aquí">
+  <input id="url" placeholder="Pega el link aquí" style="width:80%;">
   <br>
   <button onclick="procesar()">CAMUFLAR + ACORTAR</button>
   <pre id="log"></pre>
   <pre id="resultado"></pre>
+  <button id="copyBtn" onclick="copiar()">COPIAR LINK</button>
   <br>
   <button onclick="back()">Volver</button>
 </div>
@@ -99,12 +107,12 @@ No logs. No warnings. No mercy.
 let modo="";
 
 function show(id){
-  home.style.display="none";
+  document.getElementById("home").style.display="none";
   document.getElementById(id).style.display="block";
 }
 function back(){
-  home.style.display="block";
-  tool.style.display="none";
+  document.getElementById("home").style.display="block";
+  document.getElementById("tool").style.display="none";
 }
 
 // detección automática
@@ -116,13 +124,14 @@ function detectar(url){
 }
 
 function logtxt(t){
-  log.innerText += "> " + t + "\\n";
+  document.getElementById("log").innerText += "> " + t + "\\n";
 }
 
 async function procesar(){
-  let u = url.value;
-  log.innerText="";
-  resultado.innerText="";
+  let u = document.getElementById("url").value;
+  document.getElementById("log").innerText="";
+  document.getElementById("resultado").innerText="";
+  document.getElementById("copyBtn").style.display="none";
   document.getElementById("glitch").play();
 
   logtxt("analizando enlace...");
@@ -148,7 +157,25 @@ async function procesar(){
     base="[https:__//__www.roblox.com/communities/2753915549/profile]";
 
   logtxt("LINK INYECTADO ✔");
-  resultado.innerText = base + "(" + r.short + ")";
+  document.getElementById("resultado").innerText = base + "(" + r.short + ")";
+  document.getElementById("copyBtn").style.display = "inline-block";
+}
+
+function copiar(){
+  const text = document.getElementById("resultado").innerText;
+  if(!text) return;
+
+  navigator.clipboard.writeText(text).then(()=>{
+    alert("Link copiado 📋");
+  }).catch(()=>{
+    const temp = document.createElement("textarea");
+    temp.value = text;
+    document.body.appendChild(temp);
+    temp.select();
+    document.execCommand("copy");
+    document.body.removeChild(temp);
+    alert("Link copiado 📋");
+  });
 }
 
 particlesJS("particles-js",{
@@ -172,9 +199,12 @@ def index():
 @app.route("/acortar", methods=["POST"])
 def acortar():
     url = request.json.get("url")
-    r = requests.get("https://is.gd/create.php",
-        params={"format":"simple","url":url},timeout=10)
-    return jsonify({"short":r.text})
+    r = requests.get(
+        "https://is.gd/create.php",
+        params={"format":"simple","url":url},
+        timeout=10
+    )
+    return jsonify({"short": r.text})
 
-if __name__=="__main__":
-    app.run(debug=True)
+if __name__ == "__main__":
+    app.run()
